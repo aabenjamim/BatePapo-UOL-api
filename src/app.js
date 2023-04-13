@@ -45,7 +45,7 @@ const segundo = ()=>{
     }
 }
 
-const time = `${hora}:${minuto}:${segundo}`
+const time = `${hora()}:${minuto()}:${segundo()}`
 
 app.post('/participants', (req, res)=>{
     const {name} = req.body
