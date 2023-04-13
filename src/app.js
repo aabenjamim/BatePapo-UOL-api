@@ -82,6 +82,20 @@ app.post('/messages', (req, res)=>{
 
 })
 
+app.get('/messages', (req, res)=>{
+
+    const {User} = req.headers
+
+    db.collection('messages').find({$or: [
+        {type: 'message'}, 
+        {to: 'Todos'}, 
+        {to: User}, 
+        {from: User}
+    ]}).toArray()
+        .then((mensagens) => res.status(200).send(mensagens))
+        .catch((err) => res.status(500).send(err.message))
+})
+
 // Deixa o app escutando, à espera de requisições
 const PORT = 5000
 app.listen(PORT, ()=>console.log(`O servidor está rodando na porta ${PORT}`))
