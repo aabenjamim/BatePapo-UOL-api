@@ -21,7 +21,31 @@ mongoClient.connect()
 
 // Endpoints
 
-const time = `${dayjs().hour()}:${dayjs().minute()}:${dayjs().second()}`
+const hora = ()=>{
+    if(`${dayjs().hour()}`.length<2){
+        return `0${dayjs().hour()}`
+    } else{
+        return `${dayjs().hour()}`
+    }
+}
+
+const minuto = ()=>{
+    if(`${dayjs().minute()}`.length<2){
+        return `0${dayjs().minute()}`
+    } else{
+        return `${dayjs().minute()}`
+    }
+}
+
+const segundo = ()=>{
+    if(`${dayjs().second()}`.length<2){
+        return `0${dayjs().second()}`
+    } else{
+        return `${dayjs().second()}`
+    }
+}
+
+const time = `${hora}:${minuto}:${segundo}`
 
 app.post('/participants', (req, res)=>{
     const {name} = req.body
