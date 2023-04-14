@@ -59,6 +59,10 @@ const messageSchema = joi.object({
     type: joi.string().required().valid('message', 'private_message')
 })
 
+const limitSchema = joi.object({
+    limit: joi.number().integer().min(1).required()
+})
+
 app.post('/participants', async (req, res)=>{
 
     const {name} = req.body
@@ -126,7 +130,10 @@ app.post('/messages', async (req, res)=>{
 app.get('/messages', async (req, res)=>{
 
     const {user} = req.headers
-    const limit = parseInt(req.query.limit)
+    const limit = req.query.limit
+
+    const validation = limitSchema.validate(limit)
+        if(validation.error) return res.status(422).send(validation.error)
     
     let mensagensFiltradas;
 
