@@ -137,19 +137,19 @@ app.get('/messages', (req, res)=>{
 })
 
 app.put('/status', async (req, res)=>{
-    const {User} = req.headers
+    const {user} = req.headers
 
     try{
-        const usuario = await db.collection('participants').findOne({name: User})
+        const usuario = await db.collection('participants').findOne({name: user})
             if(!usuario) return res.sendStatus(404)
         
-        await db.collection("participants").updateOne({name: User}, {$set: {lastStatus: Date.now()}});
+        await db.collection("participants").updateOne({name: user}, {$set: {lastStatus: Date.now()}});
         res.sendStatus(200)
 
     } catch(err){
         res.status(500).send(err.message)
     }
-})
+}) 
 
 
 // Deixa o app escutando, à espera de requisições
