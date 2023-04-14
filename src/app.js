@@ -3,6 +3,7 @@ import cors from 'cors'
 import { MongoClient } from 'mongodb'
 import dotenv from 'dotenv'
 import dayjs from 'dayjs'
+import joi from 'joi'
 
 // Criação do servidor
 const app = express()
@@ -47,27 +48,47 @@ const segundo = ()=>{
 
 const time = `${hora()}:${minuto()}:${segundo()}`
 
-app.post('/participants', (req, res)=>{
+app.post('/participants', async(req, res)=>{
     const {name} = req.body
+
+    const nameSchema = joi.object({
+        name: joi.string().required()
+      });
 
     if(!name){
         return res.sendStatus(422)
     }
 
-    const novoParticipante = {name, lastStatus: Date.now()}
-    db.collection('participants').insertOne(novoParticipante)
+    const validation = nameSchema.validate(name, { abortEarly: false })
 
-    const entrou = { 
-        from: name, 
-        to: 'Todos', 
-        text: 'entra na sala...', 
-        type: 'status', 
-        time: time
+    if (validation.error) {
+    const errors = validation.error.details.map((detail) => detail.message);
+    return res.status(422).send(errors);
     }
-    
-    db.collection('messages').insertOne(entrou)
-        .then(() => res.sendStatus(201))
-        .catch((err) => res.status(500).send(err.message))
+
+    try{
+        const novoParticipante = {name, lastStatus: Date.now()}
+
+        const verifica = await db.collection('participants').findOne(name)
+        if(verifica) return res.status(409).send('O nome de usuário já existe')
+        
+        db.collection('participants').insertOne(novoParticipante)
+
+        const entrou = { 
+            from: name, 
+            to: 'Todos', 
+            text: 'entra na sala...', 
+            type: 'status', 
+            time: time
+        }
+        
+        db.collection('messages').insertOne(entrou)
+            .then(() => res.sendStatus(201))
+            .catch((err) => res.status(500).send(err.message))
+
+    }catch(err){
+        res.status(500).send(err.message)
+    }
 })
 
 app.get("/participants", (req, res) => {
