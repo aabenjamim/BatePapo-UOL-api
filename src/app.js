@@ -48,7 +48,7 @@ const segundo = ()=>{
 
 const time = `${hora()}:${minuto()}:${segundo()}`
 
-app.post('/participants', async(req, res)=>{
+app.post('/participants', (req, res)=>{
     const {name} = req.body
 
     const nameSchema = joi.object({
@@ -58,31 +58,26 @@ app.post('/participants', async(req, res)=>{
     const validation = nameSchema.validate(name, { abortEarly: false })
 
     if (validation.error) {
-    const errors = validation.error.details.map((detail) => detail.message);
-    return res.status(422).send(errors);
+        const errors = validation.error.details.map((detail) => detail.message);
+        return res.status(422).send(errors);
     }
 
-    const novoParticipante = {name, lastStatus: Date.now()}
-
-    const verifica = await db.collection('participants').findOne(name)
+    db.collection('participants').findOne(name)
         if(verifica) return res.status(409).send('O nome de usuário já existe')
 
-    const insere = await db.collection('participants').insertOne(novoParticipante)
-        if(!insere) return res.sendStatus(500)
-
-        res.sendStatus(201)
-
-        const entrou = { 
-            from: name, 
-            to: 'Todos', 
-            text: 'entra na sala...', 
-            type: 'status', 
-            time: time
-        }
-        
-        await db.collection('messages').insertOne(entrou)
-        res.sendStatus(201)
-
+    const novoParticipante = {name, lastStatus: Date.now()}
+    db.collection('participants').insertOne(novoParticipante)
+    const entrou = { 
+        from: name, 
+        to: 'Todos', 
+        text: 'entra na sala...', 
+        type: 'status', 
+        time: time
+    }
+    
+    db.collection('messages').insertOne(entrou)
+        .then(() => res.sendStatus(201))
+        .catch((err) => res.status(500).send(err.message))
 })
 
 app.get("/participants", (req, res) => {
