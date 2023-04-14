@@ -48,25 +48,21 @@ const segundo = ()=>{
 
 const time = `${hora()}:${minuto()}:${segundo()}`
 
-app.post('/participants', async (req, res)=>{
+const nameSchema = joi.object({
+    name: joi.string().required().min(3)
+})
 
-    const nameSchema = joi.object({
-        name: joi.string().required()
-    })
+app.post('/participants', async (req, res)=>{
 
     const {name} = req.body
 
-    const validation = nameSchema.validate(name, { abortEarly: false })
+    const validation = nameSchema.validate({name})
 
-    if (validation.error) {
-        const errors = validation.error.details.map((detail) => detail.message);
-        return res.status(422).send(errors);
-    }
+    if (validation.error) return res.status(422).send('Nome inválido')
 
     try{
-
-        const verifica = await db.collection('participants').findOne(name)
-        if(verifica) return res.status(409).send("Usuário já existe")
+        const verifica = await db.collection('participants').findOne({name})
+            if(verifica) return res.status(409).send("Usuário já existe")
 
         const novoParticipante = {name, lastStatus: Date.now()}
         const entrou = { 
@@ -81,7 +77,7 @@ app.post('/participants', async (req, res)=>{
         await db.collection('messages').insertOne(entrou)
 
         return res.sendStatus(201) 
-            
+
     } catch(err){
         return res.status(500).send(err.message)
     }
