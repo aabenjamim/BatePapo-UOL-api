@@ -53,7 +53,6 @@ const nameSchema = joi.object({
 })
 
 const messageSchema = joi.object({
-    from: joi.string().required(),
     to: joi.string().required(),
     text: joi.string().required(),
     type: joi.string().required().valid('message', 'private_message')
@@ -101,9 +100,6 @@ app.post('/messages', async (req, res)=>{
 
     const {User} = req.headers
 
-    const validation = messageSchema.validate({from: User, to, text, type}, { abortEarly: false })
-    if (validation.error) return res.status(422).send('Não foi possível enviar a mensagem')
-
     const msg = {
         from: User,
         to,
@@ -113,8 +109,11 @@ app.post('/messages', async (req, res)=>{
     }
 
     try{
-        const cadastrado = await dayjs.collection('participants').findOne({name: User})
-            if(!cadastrado) return res.status(422).send('Não foi possível enviar a mensagem')
+        const validation = messageSchema.validate({to, text, type}, { abortEarly: false })
+            if (validation.error) return res.status(422).send(validation.error)
+
+        const cadastrado = await db.collection('participants').findOne({name: User})
+            if(!cadastrado) return res.status(422).send('O usuário não está logado')
 
         db.collection('messages').insertOne(msg)
         return res.sendStatus(201)
