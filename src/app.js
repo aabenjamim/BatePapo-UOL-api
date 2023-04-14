@@ -53,11 +53,7 @@ app.post('/participants', async(req, res)=>{
 
     const nameSchema = joi.object({
         name: joi.string().required()
-      });
-
-    if(!name){
-        return res.sendStatus(422)
-    }
+    });
 
     const validation = nameSchema.validate(name, { abortEarly: false })
 
@@ -66,13 +62,14 @@ app.post('/participants', async(req, res)=>{
     return res.status(422).send(errors);
     }
 
-    try{
-        const novoParticipante = {name, lastStatus: Date.now()}
+    const novoParticipante = {name, lastStatus: Date.now()}
 
-        const verifica = await db.collection('participants').findOne(name)
+    const verifica = await db.collection('participants').findOne(name)
         if(verifica) return res.status(409).send('O nome de usuário já existe')
 
-        await db.collection('participants').insertOne(novoParticipante)
+    const insere = await db.collection('participants').insertOne(novoParticipante)
+        if(!insere) return res.sendStatus(500)
+
         res.sendStatus(201)
 
         const entrou = { 
@@ -86,9 +83,6 @@ app.post('/participants', async(req, res)=>{
         await db.collection('messages').insertOne(entrou)
         res.sendStatus(201)
 
-    }catch(err){
-        res.status(500).send(err.message)
-    }
 })
 
 app.get("/participants", (req, res) => {
