@@ -123,18 +123,30 @@ app.post('/messages', async (req, res)=>{
     }
 })
 
-app.get('/messages', (req, res)=>{
+app.get('/messages', async (req, res)=>{
 
     const {user} = req.headers
+    const limit = parseInt(req.query.limit)
+    
+    let mensagensFiltradas;
 
-    db.collection('messages').find({$or: [
-        {type: 'message'}, 
-        {to: 'Todos'}, 
-        {to: user}, 
-        {from: user}
-    ]}).toArray()
-        .then((mensagens) => res.status(200).send(mensagens))
-        .catch((err) => res.status(500).send(err.message))
+    try{
+        const mensagens = await db.collection('messages').find({$or: [
+            {type: 'message'}, 
+            {to: 'Todos'}, 
+            {to: user}, 
+            {from: user}
+        ]}).toArray()
+
+        if(mensagens) mensagensFiltradas = mensagens.filter(
+           () => limit ? mensagens.slice(-limit) : true
+        )
+
+        res.status(200).send(mensagensFiltradas)
+
+    }catch(err){
+        return res.status(500).send(err.message)
+    }
 })
 
 app.post('/status', async (req, res)=>{
