@@ -53,6 +53,7 @@ const nameSchema = joi.object({
 })
 
 const messageSchema = joi.object({
+    from: joi.string().required(),
     to: joi.string().required(),
     text: joi.string().required(),
     type: joi.string().required().valid('message', 'private_message')
@@ -95,12 +96,12 @@ app.get("/participants", (req, res) => {
         .catch((err) => res.status(500).send(err.message))
 })
 
-app.post('/messages', (req, res)=>{
+app.post('/messages', async (req, res)=>{
     const {to, text, type} = req.body
 
     const {User} = req.headers
 
-    const validation = messageSchema.validate({to, text, type})
+    const validation = messageSchema.validate({from: User, to, text, type}, { abortEarly: false })
     if (validation.error) return res.status(422).send('Não foi possível enviar a mensagem')
 
     const msg = {
@@ -111,25 +112,15 @@ app.post('/messages', (req, res)=>{
         time: time
     }
 
-    db.collection('messages').insertOne(msg)
-    .then(()=>res.sendStatus(201))
-    .catch((err) => res.status(500).send(err.message))
+    try{
+        const cadastrado = await dayjs.collection('participants').findOne({name: User})
+            if(!cadastrado) return res.status(422).send('Não foi possível enviar a mensagem')
 
-    /*let ok = false
-
-    db.collection('participants').findOne(User)
-        .then(()=>{
-            ok = true
-            res.sendStatus()
-        })
-        .catch((err) => res.status(422).send(err.message))
-
-    if(ok){
         db.collection('messages').insertOne(msg)
-            .then(()=>res.sendStatus(201))
-            .catch((err) => res.status(500).send(err.message))
-    }*/
-
+        return res.sendStatus(201)
+    } catch(err){
+        return res.status(500).send(err.message)
+    }
 })
 
 app.get('/messages', (req, res)=>{
