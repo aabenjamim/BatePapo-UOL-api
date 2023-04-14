@@ -136,7 +136,7 @@ app.get('/messages', (req, res)=>{
         .catch((err) => res.status(500).send(err.message))
 })
 
-app.put('/status', async (req, res)=>{
+app.post('/status', async (req, res)=>{
     const {user} = req.headers
 
     try{
@@ -150,6 +150,12 @@ app.put('/status', async (req, res)=>{
         res.status(500).send(err.message)
     }
 }) 
+
+setInterval(()=>{
+
+    const ultimoStatus = Date.now()
+
+}, 15000)
 
 
 // Deixa o app escutando, à espera de requisições
