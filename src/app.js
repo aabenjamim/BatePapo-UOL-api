@@ -79,11 +79,11 @@ app.post('/participants', async (req, res)=>{
 
         await db.collection('participants').insertOne(novoParticipante)
         await db.collection('messages').insertOne(entrou)
-            res.sendStatus(201)
-        
 
+        return res.sendStatus(201) 
+            
     } catch(err){
-        res.status(500).send(err.message)
+        return res.status(500).send(err.message)
     }
 })
 
