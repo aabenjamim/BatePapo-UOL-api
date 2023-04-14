@@ -49,7 +49,13 @@ const segundo = ()=>{
 const time = `${hora()}:${minuto()}:${segundo()}`
 
 const nameSchema = joi.object({
-    name: joi.string().required().min(3)
+    name: joi.string().required()
+})
+
+const messageSchema = joi.object({
+    to: joi.string().required(),
+    text: joi.string().required(),
+    type: joi.string().required().valid('message', 'private_message')
 })
 
 app.post('/participants', async (req, res)=>{
@@ -92,7 +98,10 @@ app.get("/participants", (req, res) => {
 app.post('/messages', (req, res)=>{
     const {to, text, type} = req.body
 
-    const { User } = req.headers
+    const {User} = req.headers
+
+    const validation = messageSchema.validate({to, text, type})
+    if (validation.error) return res.status(422).send('Não foi possível enviar a mensagem')
 
     const msg = {
         from: User,
@@ -102,7 +111,11 @@ app.post('/messages', (req, res)=>{
         time: time
     }
 
-    let ok = false
+    db.collection('messages').insertOne(msg)
+    .then(()=>res.sendStatus(201))
+    .catch((err) => res.status(500).send(err.message))
+
+    /*let ok = false
 
     db.collection('participants').findOne(User)
         .then(()=>{
@@ -115,7 +128,7 @@ app.post('/messages', (req, res)=>{
         db.collection('messages').insertOne(msg)
             .then(()=>res.sendStatus(201))
             .catch((err) => res.status(500).send(err.message))
-    }
+    }*/
 
 })
 
