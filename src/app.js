@@ -48,12 +48,13 @@ const segundo = ()=>{
 
 const time = `${hora()}:${minuto()}:${segundo()}`
 
-app.post('/participants', (req, res)=>{
-    const {name} = req.body
+app.post('/participants', async (req, res)=>{
 
     const nameSchema = joi.object({
         name: joi.string().required()
-    });
+    })
+
+    const {name} = req.body
 
     const validation = nameSchema.validate(name, { abortEarly: false })
 
@@ -62,22 +63,28 @@ app.post('/participants', (req, res)=>{
         return res.status(422).send(errors);
     }
 
-    db.collection('participants').findOne(name)
-        if(verifica) return res.status(409).send('O nome de usuário já existe')
+    try{
 
-    const novoParticipante = {name, lastStatus: Date.now()}
-    db.collection('participants').insertOne(novoParticipante)
-    const entrou = { 
-        from: name, 
-        to: 'Todos', 
-        text: 'entra na sala...', 
-        type: 'status', 
-        time: time
+        const verifica = await db.collection('participants').findOne(name)
+        if(verifica) return res.status(409).send("Usuário já existe")
+
+        const novoParticipante = {name, lastStatus: Date.now()}
+        const entrou = { 
+            from: name, 
+            to: 'Todos', 
+            text: 'entra na sala...', 
+            type: 'status', 
+            time: time
+        }
+
+        await db.collection('participants').insertOne(novoParticipante)
+        await db.collection('messages').insertOne(entrou)
+            res.sendStatus(201)
+        
+
+    } catch(err){
+        res.status(500).send(err.message)
     }
-    
-    db.collection('messages').insertOne(entrou)
-        .then(() => res.sendStatus(201))
-        .catch((err) => res.status(500).send(err.message))
 })
 
 app.get("/participants", (req, res) => {
