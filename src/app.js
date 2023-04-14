@@ -71,8 +71,9 @@ app.post('/participants', async(req, res)=>{
 
         const verifica = await db.collection('participants').findOne(name)
         if(verifica) return res.status(409).send('O nome de usuário já existe')
-        
-        db.collection('participants').insertOne(novoParticipante)
+
+        await db.collection('participants').insertOne(novoParticipante)
+        res.sendStatus(201)
 
         const entrou = { 
             from: name, 
@@ -82,9 +83,8 @@ app.post('/participants', async(req, res)=>{
             time: time
         }
         
-        db.collection('messages').insertOne(entrou)
-            .then(() => res.sendStatus(201))
-            .catch((err) => res.status(500).send(err.message))
+        await db.collection('messages').insertOne(entrou)
+        res.sendStatus(201)
 
     }catch(err){
         res.status(500).send(err.message)
