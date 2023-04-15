@@ -59,10 +59,6 @@ const messageSchema = joi.object({
     type: joi.string().required().valid('message', 'private_message')
 })
 
-const limitSchema = joi.object({
-    limit: joi.number().integer().min(1).required()
-})
-
 app.post('/participants', async (req, res)=>{
 
     const {name} = req.body
@@ -126,16 +122,47 @@ app.post('/messages', async (req, res)=>{
         return res.status(500).send(err.message)
     }
 })
+/*
+app.get('/messages', async (req, res)=>{
+
+    const {user} = req.headers
+    //const {limit} = req.query
+    
+    try{
+        const mensagens = await db.collection('messages').find({$or: [
+            {type: 'message'}, 
+            {to: 'Todos'}, 
+            {to: user}, 
+            {from: user}
+        ]}).toArray()
+
+        return res.status(200).send(mensagens)
+
+    } catch(err){
+        return (err) => res.status(500).send(err.message)
+    }
+
+    /*
+    db.collection('messages').find({$or: [
+        {type: 'message'}, 
+        {to: 'Todos'}, 
+        {to: user}, 
+        {from: user}
+    ]}).toArray()
+        .then((mensagens) => res.status(200).send(mensagens))
+        .catch((err) => res.status(500).send(err.message))
+    
+}) */
+
+
 
 app.get('/messages', async (req, res)=>{
 
     const {user} = req.headers
-    const limit = req.query.limit
+    const {limit} = Number(req.query)
 
-    const validation = limitSchema.validate(limit)
-        if(validation.error) return res.status(422).send(validation.error)
-    
-    let mensagensFiltradas;
+        if(limit && parseInt(limit)<1) return res.status(422).send(validation.error)
+
 
     try{
         const mensagens = await db.collection('messages').find({$or: [
@@ -145,11 +172,14 @@ app.get('/messages', async (req, res)=>{
             {from: user}
         ]}).toArray()
 
-        if(mensagens) mensagensFiltradas = mensagens.filter(
-           () => limit ? mensagens.slice(-limit) : true
-        )
+        if(mensagens){
+           const mensagensFiltradas = mensagens.filter(
+                () => limit ? mensagens.slice(-limit) : true
+            )
 
-        res.status(200).send(mensagensFiltradas)
+            return res.status(200).send(mensagensFiltradas)
+        }
+         console.log(mensagensFiltradas)
 
     }catch(err){
         return res.status(500).send(err.message)
