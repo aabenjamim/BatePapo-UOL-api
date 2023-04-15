@@ -122,47 +122,12 @@ app.post('/messages', async (req, res)=>{
         return res.status(500).send(err.message)
     }
 })
-/*
-app.get('/messages', async (req, res)=>{
-
-    const {user} = req.headers
-    //const {limit} = req.query
-    
-    try{
-        const mensagens = await db.collection('messages').find({$or: [
-            {type: 'message'}, 
-            {to: 'Todos'}, 
-            {to: user}, 
-            {from: user}
-        ]}).toArray()
-
-        return res.status(200).send(mensagens)
-
-    } catch(err){
-        return (err) => res.status(500).send(err.message)
-    }
-
-    /*
-    db.collection('messages').find({$or: [
-        {type: 'message'}, 
-        {to: 'Todos'}, 
-        {to: user}, 
-        {from: user}
-    ]}).toArray()
-        .then((mensagens) => res.status(200).send(mensagens))
-        .catch((err) => res.status(500).send(err.message))
-    
-}) */
-
-
 
 app.get('/messages', async (req, res)=>{
 
     const {user} = req.headers
     const limit = req.query.limit
 
-    //const limitSchema = joi.object({limit: joi.number().min(1).integer()})
-
     try{
         const mensagens = await db.collection('messages').find({$or: [
             {type: 'message'}, 
@@ -171,30 +136,13 @@ app.get('/messages', async (req, res)=>{
             {from: user}
         ]}).toArray()
 
-        /*if(mensagens){
-           const mensagensFiltradas = mensagens.filter(
-                () => limit ? mensagens.slice(-limit) : true
-            )
-
-            return res.status(200).send(mensagensFiltradas)
-        }*/
-
-        if(limit){
-            //const validation = limitSchema.validate(limit)
-               // if(validation.error) return res.status(422).send(validation.error)
-
-           // return res.status(200).send(mensagens.slice(-limit))
-        
+        if(limit){        
             if((limit<=0) || (isNaN(limit))){ 
                 return res.status(422).send('limit está errado')
             } else{
                 return res.status(200).send(mensagens.slice(-limit))
             }
         }
-/*
-        if(limit){
-            return res.status(200).send(mensagens.slice(-limit))
-        }*/
 
         return res.status(200).send(mensagens)
 
@@ -218,12 +166,34 @@ app.post('/status', async (req, res)=>{
     }
 }) 
 
-/*
-setInterval(()=>{
 
-    const ultimoStatus = Date.now()
+setInterval(async ()=>{
 
-}, 15000)*/
+    const inativos = Date.now() - 10000
+
+    try{
+       const usuariosInativos =  await db.collection('participants').find({lastStatus: {$lte: inativos}}).toArray()
+        if(usuariosInativos){
+            usuariosInativos.map((user)=>{
+            const mensagemSaida = {
+                from: user.name, 
+                to: 'Todos', 
+                text: 'sai da sala...', 
+                type: 'status', 
+                time: time
+            }
+
+            db.collection('messages').insertOne(mensagemSaida)
+        })
+        }
+
+        await db.collection('participants').deleteMany({lastStatus: {$lte: inativos}})
+
+    } catch(err){
+        return res.status(500).send(err.message)
+    }
+
+}, 15000)
 
 
 // Deixa o app escutando, à espera de requisições
