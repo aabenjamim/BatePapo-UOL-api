@@ -161,9 +161,7 @@ app.get('/messages', async (req, res)=>{
     const {user} = req.headers
     const limit = req.query.limit
 
-        if((limit && parseInt(limit)<1) || (limit && isNaN(limit))){ 
-            return res.status(422).send(validation.error)
-        }
+    //const limitSchema = joi.object({limit: joi.number().min(1).integer()})
 
     try{
         const mensagens = await db.collection('messages').find({$or: [
@@ -182,8 +180,21 @@ app.get('/messages', async (req, res)=>{
         }*/
 
         if(limit){
-            return res.status(200).send(mensagens.slice(-limit))
+            //const validation = limitSchema.validate(limit)
+               // if(validation.error) return res.status(422).send(validation.error)
+
+           // return res.status(200).send(mensagens.slice(-limit))
+        
+            if((limit<=0) || (isNaN(limit))){ 
+                return res.status(422).send('limit está errado')
+            } else{
+                return res.status(200).send(mensagens.slice(-limit))
+            }
         }
+/*
+        if(limit){
+            return res.status(200).send(mensagens.slice(-limit))
+        }*/
 
         return res.status(200).send(mensagens)
 
