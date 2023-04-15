@@ -159,10 +159,11 @@ app.get('/messages', async (req, res)=>{
 app.get('/messages', async (req, res)=>{
 
     const {user} = req.headers
-    const {limit} = Number(req.query)
+    const limit = req.query.limit
 
-        if(limit && parseInt(limit)<1) return res.status(422).send(validation.error)
-
+        if((limit && parseInt(limit)<1) || (limit && isNaN(limit))){ 
+            return res.status(422).send(validation.error)
+        }
 
     try{
         const mensagens = await db.collection('messages').find({$or: [
@@ -172,14 +173,19 @@ app.get('/messages', async (req, res)=>{
             {from: user}
         ]}).toArray()
 
-        if(mensagens){
+        /*if(mensagens){
            const mensagensFiltradas = mensagens.filter(
                 () => limit ? mensagens.slice(-limit) : true
             )
 
             return res.status(200).send(mensagensFiltradas)
+        }*/
+
+        if(limit){
+            return res.status(200).send(mensagens.slice(-limit))
         }
-         console.log(mensagensFiltradas)
+
+        return res.status(200).send(mensagens)
 
     }catch(err){
         return res.status(500).send(err.message)
@@ -201,11 +207,12 @@ app.post('/status', async (req, res)=>{
     }
 }) 
 
+/*
 setInterval(()=>{
 
     const ultimoStatus = Date.now()
 
-}, 15000)
+}, 15000)*/
 
 
 // Deixa o app escutando, à espera de requisições
