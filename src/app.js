@@ -190,7 +190,7 @@ setInterval(async ()=>{
         await db.collection('participants').deleteMany({lastStatus: {$lte: inativos}})
 
     } catch(err){
-        return res.status(500).send(err.message)
+        return console.log(err.message)
     }
 
 }, 15000)
